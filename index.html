@@ -46,7 +46,7 @@
 
         #features {
             top: 0;
-            height: 100px;
+            height: 120px;
             margin-top: 20px;
             width: 250px;
         }
@@ -55,7 +55,7 @@
             padding: 10px;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
             line-height: 18px;
-            height: 210px;
+            height: 165px;
             margin-bottom: 40px;
             width: 150px;
         }
@@ -78,9 +78,9 @@
 <body>
     <div id="map"></div>
     <div class='map-overlay' id='features'>
-        <h2>WA Covid Vaccines</h2>
+        <h2>WA Covid Vaccinations</h2>
         <div id='text-description'>
-            <p>Hover over a state!</p>
+            <p>Hover over a county!</p>
         </div>
     </div>
     <div class='map-overlay' id='legend'></div>
@@ -90,12 +90,12 @@
         const map = new mapboxgl.Map({
                 container: 'map', // container ID
                 style: 'mapbox://styles/mapbox/light-v10', // style URL
-                zoom: 3, // starting zoom
-                center: [-100, 40] // starting center
+                zoom: 6, // starting zoom
+                center: [-121.5, 47.3333333] // starting center
             }
         );
 
-        async function geojsonFetch() { 
+        async function geojsonFetch() {
             // other operations
             let response = await fetch('assets/wa-covid-data-102521.geojson');
             let covidData = await response.json();
@@ -118,21 +118,60 @@
                     'fill-color': [
                         'step',
                         ['get', 'fullyVaxPer10k'],
-                        '#FFEDA0',   // stop_output_0
+                        '#D0D0FA',   // stop_output_0
                         4000,          // stop_input_0
-                        '#FED976',   // stop_output_1
+                        '#A1A1F6',   // stop_output_1
                         5000,          // stop_input_1
-                        '#FEB24C',   // stop_output_2
+                        '#7373F1',   // stop_output_2
                         6000,          // stop_input_2
-                        '#FD8D3C',   // stop_output_3
+                        '#4444ED',   // stop_output_3
                         7000,         // stop_input_3
-                        '#FC4E2A',   // stop_output_4
-                        8000,         // stop_input_4
-                        '#E31A1C'
+                        '#1616E9'
                     ],
                     'fill-outline-color': '#BBBBBB',
                     'fill-opacity': 0.7,
                 }
+            });
+
+            const layers = [
+                '0-3999',
+                '4000-4999',
+                '5000-5999',
+                '6000-6999',
+                '7000 or more'
+            ];
+            const colors = [
+                '#D0D0FA70',
+                '#A1A1F670',
+                '#7373F170',
+                '#4444ED70',
+                '#1616E970'
+            ];
+
+            const legend = document.getElementById('legend');
+            legend.innerHTML = "<b>Number of people fully vaccinated per 10k</b><br><br>";
+
+            layers.forEach((layer, i) => {
+                const color = colors[i];
+                const item = document.createElement('div');
+                const key = document.createElement('span');
+                key.className = 'legend-key';
+                key.style.backgroundColor = color;
+
+                const value = document.createElement('span');
+                value.innerHTML = `${layer}`;
+                item.appendChild(key);
+                item.appendChild(value);
+                legend.appendChild(item);
+            });
+
+            map.on('mousemove', ({point}) => {
+                const county = map.queryRenderedFeatures(point, {
+                    layers: ['covidData-layer']
+                });
+                document.getElementById('text-description').innerHTML = county.length ?
+                    `<h3>${county[0].properties.name}</h3><p><strong><em>${county[0].properties.fullyVaxPer10k}</strong> people fully vaccinated per 10k</em></p>` :
+                    `<p>Hover over a county!</p>`;
             });
         }
 
